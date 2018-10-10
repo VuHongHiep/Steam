@@ -1,0 +1,16 @@
+
+#set("title"){#(name)}
+
+#set("body"){
+  <div class="row">
+    <aside class="col-md-4">
+      <section class="user_info">
+        <h1>
+          #(name)
+        </h1>
+      </section>
+    </aside>
+  </div>
+}
+
+#embed("application")

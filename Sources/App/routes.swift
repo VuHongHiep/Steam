@@ -6,7 +6,7 @@ public func routes(_ router: Router) throws {
     router.get { req in
         return "It works!"
     }
-    
+
     // Basic "Hello, world!" example
     router.get("hello") { req in
         return "Hello, world!"
@@ -21,4 +21,7 @@ public func routes(_ router: Router) throws {
 
     let staticPage = StaticPage()
     try router.register(collection: staticPage)
+
+    let userController = UserController()
+    try router.register(collection: userController)
 }
