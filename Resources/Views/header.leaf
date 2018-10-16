@@ -5,7 +5,27 @@
       <ul class="nav navbar-nav navbar-right">
         <li><a href="/home">Home</a></li>
         <li><a href="/help">Help</a></li>
-        <li><a href="/users/signup">Log in</a></li>
+        #if(id){
+        <li><a href="/users">Users</a></li>
+        <li class="dropdown">
+          <a href="#" class="dropdown-toggle" data-toggle="dropdown">Account <b class="caret"></b></a>
+          <ul class="dropdown-menu">
+            <li><a href="profile">Profile</a></li>
+            <li><a href="/users/#(id)/edit">Setting</a></li>
+            <li class="divider"></li>
+            <li>
+              <a href="javascript:document.logoutForm.submit()" data-method="post">Log Out</a>
+            </li>
+            <li>
+              <form name="logoutForm" method="post" action="/users/logout">
+                <input type="hidden" name="logout" value="logout">
+              </form>
+            </li>
+          </ul>
+        </li>
+        } else {
+        <li><a href="/users/login">Log in</a></li>
+        }
       </ul>
     </nav>
   </div>

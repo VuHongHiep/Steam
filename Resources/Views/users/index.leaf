@@ -1,0 +1,28 @@
+
+#set("title"){All users}
+
+#set("id"){#(current.id)}
+
+#set("body"){
+<h1>All users</h1>
+
+<ul class="users">
+  #for(user in users) {
+  <li>
+    <img src="https://secure.gravatar.com/avatar/#(u.avatar)" class="gravatar" alt="#(user.name)" />
+    <a href="/users/#(user.id)">#(user.name)</a>
+    #if(current.admin){
+      #if(user.id != current.id){
+        |
+        <a href="javascript:document.delete#(user.id)Form.submit()" data-method="post">delete</a>
+        <form name="delete#(user.id)Form" method="post" action="/users/#(user.id)/delete">
+          <input type="hidden" name="delete" value="delete">
+        </form>
+      }
+    }
+  </li>
+  }
+</ul>
+}
+
+#embed("application")

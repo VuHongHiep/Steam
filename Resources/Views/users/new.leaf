@@ -1,4 +1,6 @@
 
+#set("title"){Sign Up}
+
 #set("body"){
 <h1>Sign up</h1>
 

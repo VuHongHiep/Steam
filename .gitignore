@@ -6,3 +6,4 @@ DerivedData/
 .DS_Store
 *.resolved
 .idea
+*.sqlite

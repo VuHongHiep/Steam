@@ -1,4 +1,6 @@
 
+#set("title"){Help}
+
 #set("body"){
   <h1>Help</h1>
   <p>

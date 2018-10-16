@@ -10,19 +10,19 @@ struct StaticPage: RouteCollection {
     }
 
     func home(_ req: Request) throws -> Future<View> {
-        return try req.leaf().render("home", ["title": "Home"])
+        return try req.leaf().render("home", ["id": req.userId()])
     }
 
     func help(_ req: Request) throws -> Future<View> {
-        return try req.leaf().render("help", ["title": "Help"])
+        return try req.leaf().render("help", ["id": req.userId()])
     }
 
     func about(_ req: Request) throws -> Future<View> {
-        return try req.leaf().render("about", ["title": "About"])
+        return try req.leaf().render("about", ["id": req.userId()])
     }
 
     func contact(_ req: Request) throws -> Future<View> {
-        return try req.leaf().render("contact", ["title": "Contact"])
+        return try req.leaf().render("contact", ["id": req.userId()])
     }
 }
 
@@ -31,5 +31,13 @@ extension Request {
     // make() fonksiyonu request için istenen sayfayı render etmemize yardım edecek.
     func leaf() throws -> LeafRenderer {
         return try self.make(LeafRenderer.self)
+    }
+
+    func userId() -> String? {
+        do {
+            let user = try requireAuthenticated(User.self)
+            return (user.id != nil) ? String(user.id!) : nil
+        }
+        catch { return nil }
     }
 }

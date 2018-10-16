@@ -1,4 +1,6 @@
 
+#set("title"){About}
+
 #set("body"){
   <h1>About</h1>
   <p>
