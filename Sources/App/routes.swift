@@ -23,9 +23,8 @@ public func routes(_ router: Router) throws {
     auth.delete("todos", Todo.parameter, use: todoController.delete)
 
 
-    let staticPage = StaticPage()
-    try auth.register(collection: staticPage)
+    try auth.register(collection: StaticPage())
+    try auth.register(collection:  UserController())
+    try auth.register(collection:  MicropostController())
 
-    let userController = UserController()
-    try auth.register(collection: userController)
 }

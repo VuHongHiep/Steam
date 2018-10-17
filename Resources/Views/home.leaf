@@ -2,6 +2,24 @@
 #set("title"){Home}
 
 #set("body"){
+  #if(user){
+  <div class="row">
+    <aside class="col-md-4">
+      <section class="user_info">
+        #embed("users/info")
+      </section>
+      <section class="micropost_form">
+        #embed("microposts/info")
+      </section>
+    </aside>
+    <div class="col-md-8">
+      <h3>Micropost Feed</h3>
+        <ol class="microposts">
+          #embed("microposts/show")
+        </ol>
+    </div>
+  </div>
+  } else {
   <div class="center jumbotron">
     <h1>Welcome to the Sample App</h1>
 
@@ -15,6 +33,7 @@
   </div>
 
   <a href="http://rubyonrails.org/"><img src="/images/rails.png" alt="Rails logo"/></a>
+  }
 }
 
 #embed("application")

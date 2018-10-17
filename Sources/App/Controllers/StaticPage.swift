@@ -10,19 +10,42 @@ struct StaticPage: RouteCollection {
     }
 
     func home(_ req: Request) throws -> Future<View> {
-        return try req.leaf().render("home", ["id": req.userId()])
+        do {
+            let user = try req.requireAuthenticated(User.self)
+            return try user.microposts.query(on: req).all().flatMap({ (posts) -> EventLoopFuture<View> in
+                let data = HomeData(user: user, avatar: user.avatar, microposts: posts, owned: true)
+                return try req.leaf().render("home", data)
+            })
+        } catch {
+            return try req.leaf().render("home")
+        }
     }
 
     func help(_ req: Request) throws -> Future<View> {
-        return try req.leaf().render("help", ["id": req.userId()])
+        do {
+            let user = try req.requireAuthenticated(User.self)
+            return try req.leaf().render("help", ["user": user])
+        } catch {
+            return try req.leaf().render("help")
+        }
     }
 
     func about(_ req: Request) throws -> Future<View> {
-        return try req.leaf().render("about", ["id": req.userId()])
+        do {
+            let user = try req.requireAuthenticated(User.self)
+            return try req.leaf().render("about", ["user": user])
+        } catch {
+            return try req.leaf().render("about")
+        }
     }
 
     func contact(_ req: Request) throws -> Future<View> {
-        return try req.leaf().render("contact", ["id": req.userId()])
+        do {
+            let user = try req.requireAuthenticated(User.self)
+            return try req.leaf().render("contact", ["user": user])
+        } catch {
+            return try req.leaf().render("contact")
+        }
     }
 }
 
@@ -33,11 +56,17 @@ extension Request {
         return try self.make(LeafRenderer.self)
     }
 
-    func userId() -> String? {
+    func authenticatedUser() -> User? {
         do {
-            let user = try requireAuthenticated(User.self)
-            return (user.id != nil) ? String(user.id!) : nil
+            return try requireAuthenticated(User.self)
         }
         catch { return nil }
     }
+}
+
+struct HomeData: Encodable {
+    var user: User
+    var avatar : String
+    var microposts: [Micropost]
+    var owned: Bool
 }

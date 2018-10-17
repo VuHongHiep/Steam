@@ -7,3 +7,4 @@ DerivedData/
 *.resolved
 .idea
 *.sqlite
+Public/uploads

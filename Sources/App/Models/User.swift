@@ -90,3 +90,9 @@ struct SeedUser: SQLiteMigration {
         return .done(on: conn)
     }
 }
+
+extension User {
+    var microposts: Children<User, Micropost> {
+        return children(\.userId)
+    }
+}

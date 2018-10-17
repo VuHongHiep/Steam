@@ -1,5 +1,5 @@
 
-#set("title"){#(name)}
+#set("title"){#(user.name)}
 
 #set("body"){
   <div class="row">
@@ -7,10 +7,16 @@
       <section class="user_info">
         <h1>
           <img src="https://secure.gravatar.com/avatar/#(avatar)" class="gravatar" alt="#(name)" />
-          #(name)
+          #(user.name)
         </h1>
       </section>
     </aside>
+    <div class="col-md-8">
+        <h3>Microposts #count(microposts)</h3>
+        <ol class="microposts">
+            #embed("microposts/show")
+        </ol>
+    </div>
   </div>
 }
 

@@ -1,0 +1,5 @@
+
+<img src="https://secure.gravatar.com/avatar/#(avatar)" class="gravatar" alt="#(user.name)" />
+<h1>#(user.name)</h1>
+<span><a href="/users/#(user.id)">view my profile</a></span>
+<span>#count(microposts) microposts</span>
