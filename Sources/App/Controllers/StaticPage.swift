@@ -12,7 +12,7 @@ struct StaticPage: RouteCollection {
     func home(_ req: Request) throws -> Future<View> {
         do {
             let user = try req.requireAuthenticated(User.self)
-            return try user.microposts.query(on: req).all().flatMap({ (posts) -> EventLoopFuture<View> in
+            return try user.microposts.query(on: req).sort(\.createAt, .descending).all().flatMap({ (posts) -> EventLoopFuture<View> in
                 let data = HomeData(user: user, avatar: user.avatar, microposts: posts, owned: true)
                 return try req.leaf().render("home", data)
             })

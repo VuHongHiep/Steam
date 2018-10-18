@@ -35,6 +35,7 @@ public func configure(_ config: inout Config, _ env: inout Environment, _ servic
     migrations.add(migration: AdminUser.self, database: .sqlite)
     migrations.add(migration: SeedUser.self, database: .sqlite)
     migrations.add(model: Micropost.self, database: .sqlite)
+    migrations.add(model: UserConnection.self, database: .sqlite)
     services.register(migrations)
 
     try services.register(LeafProvider())

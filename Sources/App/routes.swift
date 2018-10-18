@@ -24,7 +24,7 @@ public func routes(_ router: Router) throws {
 
 
     try auth.register(collection: StaticPage())
-    try auth.register(collection:  UserController())
-    try auth.register(collection:  MicropostController())
+    try auth.register(collection: UserController())
+    try auth.register(collection: MicropostController())
 
 }

@@ -37,7 +37,7 @@ extension Micropost: Parameter { }
 extension Micropost: Validatable {
     static func validations() throws -> Validations<Micropost> {
         var validations = Validations(Micropost.self)
-        // try validations.add(\.content, .countMax(80))
+        try validations.add(\.content, .count(...80))
         return validations
     }
 }

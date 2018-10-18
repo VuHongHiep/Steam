@@ -9,7 +9,7 @@
 <ul class="users">
   #for(user in users) {
   <li>
-    <img src="https://secure.gravatar.com/avatar/#(u.avatar)" class="gravatar" alt="#(user.name)" />
+    <img src="https://secure.gravatar.com/avatar/#(user.avatar)" class="gravatar" alt="#(user.name)" />
     <a href="/users/#(user.id)">#(user.name)</a>
     #if(current.admin){
       #if(user.id != current.id){

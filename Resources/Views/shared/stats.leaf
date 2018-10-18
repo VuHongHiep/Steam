@@ -1,0 +1,15 @@
+
+<div class="stats">
+    <a href="/users/#(user.id)/following">
+        <strong id="following" class="stat">
+            #(followingCount)
+        </strong>
+        following
+    </a>
+    <a href="/users/#(user.id)/follower">
+        <strong id="followers" class="stat">
+            #(followerCount)
+        </strong>
+        followers
+    </a>
+</div>

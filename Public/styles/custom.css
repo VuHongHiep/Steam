@@ -136,6 +136,50 @@ aside section h1 {
   margin-top: 15px;
 }
 
+.stats {
+  overflow: auto;
+  margin-top: 0;
+  padding: 0;
+}
+
+.stats a {
+  float: left;
+  padding: 0 10px;
+  border-left: 1px solid $gray-lighter;
+  color: gray;
+}
+
+.stats a &:first-child {
+  padding-left: 0;
+  border: 0;
+}
+
+.stats a &:hover {
+  text-decoration: none;
+  color: blue;
+}
+
+.stats strong {
+  display: block;
+}
+
+.user_avatars {
+  overflow: auto;
+  margin-top: 10px;
+}
+
+.user_avatars .gravatar {
+  margin: 1px 1px;
+}
+
+.user_avatars a {
+  padding: 0;
+}
+
+.users. follow {
+    padding: 0;
+}
+
 /* forms */
 
 input, textarea, select, .uneditable-input {

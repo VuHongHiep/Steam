@@ -10,6 +10,9 @@
           #(user.name)
         </h1>
       </section>
+      <section class="stats">
+          #embed("shared/stats")
+      </section>
     </aside>
     <div class="col-md-8">
         <h3>Microposts #count(microposts)</h3>

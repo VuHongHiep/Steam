@@ -8,6 +8,9 @@
       <section class="user_info">
         #embed("users/info")
       </section>
+      <section class="stats">
+        #embed("shared/stats")
+      </section>
       <section class="micropost_form">
         #embed("microposts/info")
       </section>

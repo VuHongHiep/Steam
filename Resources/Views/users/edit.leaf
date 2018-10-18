@@ -6,7 +6,7 @@
 
 <div class="row">
   <div class="col-md-6 col-md-offset-3">
-<form accept-charset="UTF-8" action="/users/#(id)/edit" class="new_user" id="new_user" method="post">
+      <form accept-charset="UTF-8" action="/users/#(user.id)/edit" class="new_user" id="new_user" method="post">
       <input name="data_method" type="hidden" value="patch" />
           
       <input name="utf8" type="hidden" value="&#x2713;" />
@@ -15,10 +15,10 @@
       #embed("shared/error_message")
 
       <label for="user_name">Name</label>
-      <input id="user_name" name="name" type="text" value="#(name)" class="form-control" />
+      <input id="user_name" name="name" type="text" value="#(user.name)" class="form-control" />
 
       <label for="user_email">Email</label>
-      <input id="user_email" name="email" type="email" value="#(email)" class="form-control"/>
+      <input id="user_email" name="email" type="email" value="#(user.email)" class="form-control"/>
 
       <label for="user_password">Password</label>
       <input id="user_password" name="password" type="password" class="form-control"/>
@@ -30,7 +30,7 @@
     </form>
 
     <div class="gravatar_edit">
-      <img src="https://secure.gravatar.com/avatar/#(avatar)" class="gravatar" alt="#(name)" />
+      <img src="https://secure.gravatar.com/avatar/#(avatar)" class="gravatar" alt="#(user.name)" />
       <a href="http://gravatar.com/emails" target="_blank">change</a>
     </div>
   </div>

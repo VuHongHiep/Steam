@@ -20,7 +20,7 @@ final class UserController: RouteCollection {
 
     func index(_ req: Request) throws -> Future<View> {
         let currentUser = try req.requireAuthenticated(User.self)
-        return User.query(on: req).all().flatMap() { user -> EventLoopFuture<View> in
+        return User.query(on: req).all().flatMap { user in
             let data = AllUser(users: user, user: currentUser)
             return try req.leaf().render("users/index", data)
         }
@@ -29,12 +29,18 @@ final class UserController: RouteCollection {
     func show(_ req: Request)throws -> Future<View> {
         let user = try req.parameters.next(User.self)
         let current = try req.requireAuthenticated(User.self)
-        return user.flatMap({ user -> EventLoopFuture<View> in
-            return try user.microposts.query(on: req).sort(\.createAt, .descending).all().flatMap({ posts in
-                let data = ShowUser(avatar: user.avatar, user: user, microposts: Array(posts), owned: (user.id == current.id))
-                return try req.leaf().render("users/show", data)
-            })
-        })
+        let posts = user.flatMap { user in
+            return try user.microposts.query(on: req).sort(\.createAt, .descending).all()
+        }
+        return user.and(posts).flatMap { (user, posts) in
+            let data = ShowUser(avatar: user.avatar,
+                user: user,
+                microposts: Array(posts),
+                owned: (user.id == current.id))
+                //followingCount: user.following.query(on: req).count(),
+                //followerCount: user.followers.query(on: req).count())
+            return try req.leaf().render("users/show", data)
+        }
     }
 
     func new(_ req: Request) throws -> Future<View> {
@@ -44,15 +50,17 @@ final class UserController: RouteCollection {
     func create(_ req: Request, _ user: User) throws -> Future<View> {
         do {
             try user.validate()
-            // unique email
-            user.password = try BCryptDigest().hash(user.password)
-            return user.create(on: req).flatMap(to: View.self, { user in
-                try req.authenticate(user)
-                return try user.microposts.query(on: req).all().flatMap({ posts in
-                    let data = ShowUser(avatar: user.avatar, user: user, microposts: Array(posts), owned: true)
+            return User.query(on: req).filter(\User.email, .equal, user.email).count().flatMap { userCount in
+                if (userCount > 0) {
+                    return try req.leaf().render("users/new", ["error": "email existed."])
+                }
+                user.password = try BCryptDigest().hash(user.password)
+                return user.create(on: req).flatMap { user in
+                    try req.authenticate(user)
+                    let data = ShowUser(avatar: user.avatar, user: user, microposts: Array(), owned: true)
                     return try req.leaf().render("users/show", data)
-                })
-            })
+                }
+            }
         } catch let error as ValidationError {
             return Future.flatMap(on: req) { try req.leaf().render("users/new", ["error": error.errorDescription]) }
         }
@@ -64,14 +72,13 @@ final class UserController: RouteCollection {
 
     func login(_ req: Request, _ body: UserCredential) throws -> Future<Response> {
         let verifier = try req.make(BCryptDigest.self)
-        return User.authenticate(username: body.email ?? "", password: body.password ?? "", using: verifier, on: req)
-            .map(to: Response.self, { authedUser in
-                guard let user = authedUser else {
-                    return req.redirect(to: "signup")
-                }
-                try req.authenticate(user)
-                return req.redirect(to: "/users/\(user.id ?? 0)")
-            })
+        return User.authenticate(username: body.email ?? "", password: body.password ?? "", using: verifier, on: req).map { authedUser in
+            guard let user = authedUser else {
+                return req.redirect(to: "/users/signup")
+            }
+            try req.authenticate(user)
+            return req.redirect(to: "/users/\(user.id ?? 0)")
+        }
     }
 
     func logout(_ req: Request) throws -> Future<Response> {
@@ -80,39 +87,38 @@ final class UserController: RouteCollection {
     }
 
     func edit(_ req: Request) throws -> Future<View> {
-        do {
-            let user = try req.requireAuthenticated(User.self)
-            return try req.leaf().render("users/edit", user)
-        } catch {
+        guard let current = try req.authenticated(User.self) else {
+            return try req.leaf().render("users/login")
+        }
+
+        let user = try req.parameters.next(User.self)
+
+        return user.flatMap { user in
+            if(current.id == user.id || (current.admin ?? false)) {
+                let data = EditUser(error: nil, avatar: user.avatar, user: user)
+                return try req.leaf().render("users/edit", data)
+            }
             return try req.leaf().render("users/login")
         }
     }
 
-    func update(_ req: Request, _ body: UserPartial) throws -> Future<View> {
+    func update(_ req: Request, _ body: UserPartial) throws -> Future<Response> {
         do {
-            let current = try req.requireAuthenticated(User.self)
-            return try req.parameters.next(User.self).map(to: User.self, { user in
+            let _ = try req.requireAuthenticated(User.self)
+            return try req.parameters.next(User.self).flatMap({ user in
                 user.name = body.name ?? user.name
                 user.email = body.email ?? user.email
                 user.password = (body.password != nil) ? try BCryptDigest().hash(body.password!): user.password
-                return user
-            }).flatMap({ user in
-                do {
-                    if (current.id != user.id) {
-                        let data = EditUser(error: "Not correct user", user: current)
-                        return try req.leaf().render("users/edit", data)
-                    }
-                    try user.validate()
-                    return user.update(on: req).flatMap({
-                        user in try req.leaf().render("users/show", user)
-                    })
-                } catch let error as ValidationError {
-                    let data = EditUser(error: error.description, user: current)
-                    return try req.leaf().render("users/edit", data)
+                try user.validate()
+                return user.update(on: req).map { user in
+                    req.redirect(to: "/users/\(user.id ?? 0)")
                 }
+            }).catchFlatMap({ error in
+                guard error is ValidationError else { throw error }
+                throw Abort.redirect(to: "/users/edit")
             })
         } catch {
-            return try req.leaf().render("users/login")
+            throw Abort.redirect(to: "users/login")
         }
     }
 
@@ -146,6 +152,7 @@ struct AllUser: Encodable {
 
 struct EditUser: Encodable {
     var error: String?
+    var avatar: String
     var user: User
 }
 
@@ -154,4 +161,6 @@ struct ShowUser: Encodable {
     var user: User
     var microposts: [Micropost]
     var owned: Bool
+    //var followingCount: Int
+    //var followerCount: Int
 }
