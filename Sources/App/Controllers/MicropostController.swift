@@ -7,7 +7,6 @@
 
 import Vapor
 import Multipart
-import Leaf
 import Crypto
 
 final class MicropostController: RouteCollection {

@@ -1,6 +1,5 @@
 import Vapor
 import Crypto
-import Random
 
 final class UserController: RouteCollection {
 

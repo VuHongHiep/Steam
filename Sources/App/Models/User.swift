@@ -20,7 +20,18 @@ final class User: Codable {
 
 extension User: SQLiteModel { }
 
-extension User: Migration { }
+extension User: Migration {
+    static func prepare(on conn: SQLiteConnection) -> Future<Void> {
+        return Database.create(self, on: conn) { (builder) in
+            try addProperties(to: builder)
+            builder.unique(on: \.email)
+        }
+    }
+
+    static func revert(on conn: SQLiteConnection) -> Future<Void> {
+        return Database.delete(self, on: conn)
+    }
+}
 
 extension User: Content { }
 
@@ -77,20 +88,6 @@ struct SeedUser: SQLiteMigration {
 
     static func revert(on conn: SQLiteConnection) -> Future<Void> {
         return .done(on: conn)
-    }
-}
-
-struct AddEmailIndex: SQLiteMigration {
-    static func prepare(on conn: SQLiteConnection) -> Future<Void> {
-        return Database.update(User.self, on: conn) { builder in
-            builder.unique(on: \.email)
-        }
-    }
-
-    static func revert(on conn: SQLiteConnection) -> Future<Void> {
-        return Database.update(User.self, on: conn) { builder in
-            builder.deleteUnique(from: \.email)
-        }
     }
 }
 

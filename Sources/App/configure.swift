@@ -1,13 +1,12 @@
 import FluentSQLite
 import Vapor
-import Leaf
 import Authentication
 
 /// Called before your application initializes.
 public func configure(_ config: inout Config, _ env: inout Environment, _ services: inout Services) throws {
     /// Register providers first
     try services.register(FluentSQLiteProvider())
-    
+
     /// Register routes to the router
     let router = EngineRouter.default()
     try routes(router)
@@ -36,18 +35,16 @@ public func configure(_ config: inout Config, _ env: inout Environment, _ servic
 
     /// Configure migrations
     var migrations = MigrationConfig()
-    migrations.add(model: Todo.self, database: .sqlite)
     migrations.add(model: User.self, database: .sqlite)
     migrations.add(migration: AdminUser.self, database: .sqlite)
     migrations.add(migration: SeedUser.self, database: .sqlite)
-    // migrations.add(migration: AddEmailIndex.self, database: .sqlite)
     migrations.add(model: Micropost.self, database: .sqlite)
     migrations.add(model: UserConnection.self, database: .sqlite)
     migrations.add(model: Token.self, database: .sqlite)
     services.register(migrations)
 
-    try services.register(LeafProvider())
-    config.prefer(LeafRenderer.self, for: ViewRenderer.self)
+    // try services.register(LeafProvider())
+    // config.prefer(LeafRenderer.self, for: ViewRenderer.self)
 
     try services.register(AuthenticationProvider())
 
