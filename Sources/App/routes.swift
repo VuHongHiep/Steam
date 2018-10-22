@@ -3,8 +3,10 @@ import Vapor
 /// Register your application's routes here.
 public func routes(_ router: Router) throws {
     
-    let session = User.authSessionsMiddleware()
-    let auth = router.grouped(session)
+    let api = router.grouped("api")
+    
+    let token = User.tokenAuthMiddleware()
+    let auth = api.grouped(token)
     
     // Basic "It works" example
     auth.get { req in
@@ -24,7 +26,7 @@ public func routes(_ router: Router) throws {
 
 
     try auth.register(collection: StaticPage())
-    try auth.register(collection: UserController())
+    try api.register(collection: UserController())
     try auth.register(collection: MicropostController())
 
 }

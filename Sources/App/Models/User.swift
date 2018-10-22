@@ -10,24 +10,11 @@ final class User: Codable {
     var password: String
     var admin: Bool? = false
 
-    var avatar: String {
-        get {
-            return avatarHash() ?? ""
-        }
-    }
-
     init(id: Int? = nil, name: String, email: String, password: String) {
         self.id = id
         self.name = name
         self.email = email
         self.password = password
-    }
-
-    func avatarHash() -> String? {
-        do {
-            return try MD5.hash(email).hexEncodedString()
-        }
-        catch { return "" }
     }
 }
 
@@ -49,8 +36,6 @@ extension User: Validatable {
     }
 }
 
-extension User: SessionAuthenticatable { }
-
 extension User: PasswordAuthenticatable {
     static var usernameKey: WritableKeyPath<User, String> {
         return \.email
@@ -59,6 +44,10 @@ extension User: PasswordAuthenticatable {
     static var passwordKey: WritableKeyPath<User, String> {
         return \.password
     }
+}
+
+extension User: TokenAuthenticatable {
+    typealias TokenType = Token
 }
 
 struct AdminUser: SQLiteMigration {
@@ -91,6 +80,20 @@ struct SeedUser: SQLiteMigration {
     }
 }
 
+struct AddEmailIndex: SQLiteMigration {
+    static func prepare(on conn: SQLiteConnection) -> Future<Void> {
+        return Database.update(User.self, on: conn) { builder in
+            builder.unique(on: \.email)
+        }
+    }
+
+    static func revert(on conn: SQLiteConnection) -> Future<Void> {
+        return Database.update(User.self, on: conn) { builder in
+            builder.deleteUnique(from: \.email)
+        }
+    }
+}
+
 extension User {
     var microposts: Children<User, Micropost> {
         return children(\.userId)
@@ -101,19 +104,26 @@ extension User {
     var following: Siblings<User, User, UserConnection> {
         return self.siblings(\UserConnection.leftID, \UserConnection.rightID)
     }
-    
+
     var followers: Siblings<User, User, UserConnection> {
         return self.siblings(\UserConnection.rightID, \UserConnection.leftID)
     }
-    
+
     func follow(user: User, on connection: DatabaseConnectable) -> Future<(current: User, following: User)> {
         return Future.flatMap(on: connection) {
             let pivot = try UserConnection(left: self, right: user)
             return pivot.save(on: connection).transform(to: (self, user))
         }
     }
-    
+
     func unfollow(user: User, on connection: DatabaseConnectable) -> Future<(current: User, unfollowed: User)> {
         return self.following.detach(user, on: connection).transform(to: (self, user))
+    }
+}
+
+extension User {
+    struct PublicUser: Content {
+        var token: String
+        var user: User
     }
 }

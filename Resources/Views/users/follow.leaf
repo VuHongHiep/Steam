@@ -6,14 +6,14 @@
     <input name="utf8" type="hidden" value="&#x2713;" />
     <input name="authenticity_token" type="hidden" value="NNb6+J/j46LcrgYUC60wQ2titMuJQ5lLqyAbnbAUkdo=" />
     <input name="followed_id" type="hidden" value="#(user.id)">
-      <input class="btn" name="commit" type="submit" value="Unfollow" />
+    <input class="btn" name="commit" type="submit" value="Unfollow" />
   </form>
   } else {
   <form accept-charset="UTF-8" action="/users/follow" class="edit_relationship" id="follow" method="post">
     <input name="utf8" type="hidden" value="&#x2713;" />
     <input name="authenticity_token" type="hidden" value="NNb6+J/j46LcrgYUC60wQ2titMuJQ5lLqyAbnbAUkdo=" />
     <input name="followed_id" type="hidden" value="#(user.id)">
-      <input "btn btn-primary" name="commit" type="submit" value="Follow" />
+    <input class="btn btn-primary" name="commit" type="submit" value="Follow" />
   </form>
   }
 }

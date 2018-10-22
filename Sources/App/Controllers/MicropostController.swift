@@ -13,19 +13,22 @@ import Crypto
 final class MicropostController: RouteCollection {
 
     func boot(router: Router) throws {
-        let users = router.grouped("microposts")
-        users.post(Post.self, use: create)
-        users.post(Micropost.parameter, use: delete)
+        let posts = router.grouped("microposts")
+        posts.get(use: index)
+        posts.post(Post.self, use: create)
+        posts.post(Micropost.parameter, use: delete)
     }
 
-    func create(_ req: Request, _ body: Post) throws -> Future<Response> {
+    func index(_ req: Request) throws -> Future<[Micropost]> {
         let currentUser = try req.requireAuthenticated(User.self)
-        let micropost = Micropost(content: body.content, picture: "", createAt: Date(), userId: body.userId)
+        return try currentUser.microposts.query(on: req).all()
+    }
+
+    func create(_ req: Request, _ body: Post) throws -> Future<HTTPStatus> {
+        let currentUser = try req.requireAuthenticated(User.self)
+        let micropost = Micropost(content: body.content, picture: "", createAt: Date(), userId: try currentUser.requireID())
         micropost.picture = MicropostController.saveFile(file: body.picture)
-        print(micropost.picture)
-        return micropost.save(on: req).map({ (post) -> Response in
-            return req.redirect(to: "/users/\(currentUser.id ?? 0)")
-        })
+        return micropost.save(on: req).transform(to: .ok)
     }
 
     static func saveFile(file: Data) -> String {
@@ -42,16 +45,13 @@ final class MicropostController: RouteCollection {
         } catch { return "" }
     }
 
-    func delete(_ req: Request) throws -> Future<Response> {
-        let currentUser = try req.requireAuthenticated(User.self)
-        return try req.parameters.next(Micropost.self).delete(on: req).map({ (post) -> Response in
-            return req.redirect(to: "/users/\(currentUser.id ?? 0)")
-        })
+    func delete(_ req: Request) throws -> Future<HTTPStatus> {
+        let _ = try req.requireAuthenticated(User.self)
+        return try req.parameters.next(Micropost.self).delete(on: req).transform(to: .ok)
     }
 }
 
 struct Post: Content {
     var content: String
-    var userId: Int
     var picture: Data
 }
