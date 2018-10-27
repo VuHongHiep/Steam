@@ -1,6 +1,7 @@
 import Vapor
 import Crypto
 
+
 final class UserController: RouteCollection {
 
     func boot(router: Router) throws {
@@ -9,13 +10,22 @@ final class UserController: RouteCollection {
         let auth = users.grouped(token)
 
         users.post(UserCredential.self, at: "login", use: login)
-        auth.post("logout", use: logout)
+        auth.delete("logout", use: logout)
 
         auth.get(use: index)
         auth.get(User.parameter, use: show)
         users.post(User.self, use: create)
         auth.patch(UserPartial.self, at: User.parameter, use: update)
         auth.delete(User.parameter, use: destroy)
+
+        auth.post("follow", User.parameter, use: follow)
+        auth.post("unfollow", User.parameter, use: unfollow)
+        auth.get(User.parameter, "following", use: following)
+        auth.get(User.parameter, "follower", use: follower)
+        auth.get("following", User.parameter, use: didFollow)
+
+        auth.get(User.parameter, "microposts", use: posts)
+        auth.get("feed", use: feeds)
     }
 
     func index(_ req: Request) throws -> Future<[User]> {
@@ -40,7 +50,6 @@ final class UserController: RouteCollection {
         try user.validate()
         user.password = try BCryptDigest().hash(user.password)
         return user.create(on: req).flatMap { user in
-            try req.authenticate(user)
             let accessToken = try Token.createToken(forUser: user)
             return accessToken.save(on: req).map(to: User.PublicUser.self) { createdToken in
                 return User.PublicUser(token: createdToken.token, user: user)
@@ -75,7 +84,6 @@ final class UserController: RouteCollection {
             }
             let hasher = try req.make(BCryptDigest.self)
             if try hasher.verify(body.password ?? "", created: existingUser.password) {
-                try req.authenticate(existingUser)
                 return try Token
                     .query(on: req)
                     .filter(\Token.userId, .equal, existingUser.requireID())
@@ -99,6 +107,75 @@ final class UserController: RouteCollection {
             .delete()
             .transform(to: HTTPResponse(status: .ok))
     }
+
+    func follow(_ req: Request) throws -> Future<HTTPResponse> {
+        let currentUser = try req.requireAuthenticated(User.self)
+        return try req.parameters.next(User.self).flatMap({ user in
+            if(currentUser.id != user.id) {
+                return currentUser.follow(user: user, on: req).transform(to: HTTPResponse(status: .ok))
+            } else {
+                throw Abort(HTTPStatus.badRequest)
+            }
+        })
+    }
+
+    func unfollow(_ req: Request) throws -> Future<HTTPResponse> {
+        let currentUser = try req.requireAuthenticated(User.self)
+        return try req.parameters.next(User.self).flatMap({ user in
+            if(currentUser.id != user.id) {
+                return currentUser.unfollow(user: user, on: req).transform(to: HTTPResponse(status: .ok))
+            } else {
+                throw Abort(HTTPStatus.badRequest)
+            }
+        })
+    }
+
+    func following(_ req: Request) throws -> Future<[User]> {
+        let _ = try req.requireAuthenticated(User.self)
+        return try req.parameters.next(User.self).flatMap({ user in
+            return try user.following.query(on: req).all()
+        })
+    }
+
+    func follower(_ req: Request) throws -> Future<[User]> {
+        let _ = try req.requireAuthenticated(User.self)
+        return try req.parameters.next(User.self).flatMap({ user in
+            return try user.followers.query(on: req).all()
+        })
+    }
+
+    func didFollow(_ req: Request) throws -> Future<UserFollowing> {
+        let currentUser = try req.requireAuthenticated(User.self)
+        return try req.parameters.next(User.self).flatMap({ user in
+            return try currentUser.following.query(on: req).filter(\UserConnection.rightID, .equal, user.requireID()).count().map {
+                count in return UserFollowing(didFollow: count > 0)
+            }
+        })
+    }
+
+    func posts(_ req: Request) throws -> Future<[Micropost]> {
+        let _ = try req.requireAuthenticated(User.self)
+        return try req.parameters.next(User.self).flatMap({ user in
+            return try user.microposts.query(on: req).sort(\.createAt, .descending).all()
+        })
+    }
+
+    func feeds(_ req: Request) throws -> Future<[UserFeed]> {
+        let currentUser = try req.requireAuthenticated(User.self)
+        return try currentUser.following.query(on: req).all()
+            .map({ users in
+                return try users.compactMap({ user -> EventLoopFuture<[UserFeed]> in
+                    let microposts = try user.microposts.query(on: req).sort(\Micropost.createAt, .descending).all()
+                    return microposts.map({ posts in return
+                        posts.compactMap({ p in UserFeed(user: user, micropost: p) })
+                    })
+                })
+            }).flatMap({ futurePosts in
+                return EventLoopFuture<[UserFeed]>.reduce(into: [], futurePosts, eventLoop: req.eventLoop, { result, posts in
+                        result += posts
+                    })
+            })
+    }
 }
 
 struct UserCredential: Content {
@@ -117,4 +194,13 @@ struct UserProfile: Content {
     var microposts: [Micropost]
     var followingCount: Int
     var followerCount: Int
+}
+
+struct UserFollowing: Content {
+    var didFollow: Bool
+}
+
+struct UserFeed: Content {
+    var user: User
+    var micropost: Micropost
 }
